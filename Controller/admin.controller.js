@@ -94,3 +94,23 @@ exports.login = async (req, res) => {
     return res.status(500).json({message: "Error Logging In Admin", err})
     }
 };
+exports.allUsers = async (req, res) => {
+  try {
+      const id = req.user.adminId;
+      const isAdmin = await Admin.findById(id);
+      if (isAdmin.role !== "admin") {
+          return res
+          .status(400)
+          .json({ message: "You Are Not Authorized"});
+      }
+
+    const allUsers = await User.find({}, { email: 1, userName: 1, _id: 0 });
+
+    return res
+      .status(200)
+      .json({ message: "All users Fetched", data: allUsers });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Error Fetching Users", err });
+  }
+};
