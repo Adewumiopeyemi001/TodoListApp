@@ -66,6 +66,56 @@ await emailSender(email, userName, otp);
   }
 };
 
+exports.isVerifyOtp = async (req, res) => {
+  try {
+    const otp = req.query.otp;
+
+  if (!otp) {
+    return res.status(400).json({message: "Please input Your Otp"})
+  }
+  const user = await User.findOne({otp: otp});
+  if (!user) {
+    return res.status(400).json({message: "User With That Otp Not Found"});
+  }
+  if (user.otp !== otp) return res.status(400).json({message: "Invalid OTP"});
+  user.isVerified = true;
+  User.otp = null;
+
+  await user.save();
+
+  return res.status(200).json({message: "OTP Verified successfully", user});
+  }catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Error Verfying OTP"});
+  }
+};
+
+exports.resendOtp = async (req, res) => {
+  try{
+    const {email} = req.body;
+    const user = await User.findOne({email});
+    if (!user) {
+      return res.status(400).json({message: "User Not Found"});
+    }
+    const generateOTP = () => {
+      const digits = '0123456789';
+      let OTP = '';
+      for (let i = 0; i < 6; i++) {
+        OTP += digits[Math.floor(Math.random() * 10)];
+      }
+      return OTP;
+    };
+
+    const otp = generateOTP();
+    user.otp = otp;
+    await user.save();
+    await emailSender(email, user.userName, otp);
+    return res.status(200).json({message: "New OTP verified successfully", user});
+  }catch (err) {
+    return res.status(500).json({ message: "Error Sending  OTP"});
+  }
+};
+
 exports.login = async (req, res) => {
   try {
     const {userName, password} = req.body;
@@ -78,6 +128,9 @@ exports.login = async (req, res) => {
     // If you are not a user, sign up
     if(!user) {
       res.status(404).json({message: "User Not Found, Please SignUp"});
+    }
+    if (user.isVerified == "false") {
+      return res.status(404).json({ message: "User Not Verified, Please check your email"});
     }
 
     const correctPassword = await bcrypt.compare(password, user.password);

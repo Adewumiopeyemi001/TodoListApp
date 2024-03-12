@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require("bcryptjs");
 const dotenv = require('dotenv');
 const Admin = require('./Models/admin.schema');
 
@@ -46,6 +47,8 @@ const adminsData = [
 const seedAdmins = async () => {
     try {
         for (const adminData of adminsData) {
+            const hashedPassword = await bcrypt.hash(adminData.password, 10);
+            adminData.password = hashedPassword;
             const newAdmin = new Admin(adminData);
             await newAdmin.save();
           }

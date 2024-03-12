@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const Admin = require('../Models/admin.schema');
+const user = require("../models/user.schema");
 
 const emailSender = async (email, lastName) => {
     const transporter = nodemailer.createTransport({
@@ -27,8 +28,8 @@ const emailSender = async (email, lastName) => {
 
 exports.signup = async (req, res) => {
     try {
-        const { firstName, lastName, email, password, role} = req.body;
-        if ( !firstName || !lastName || !email || !password || !role) {
+        const { firstName, lastName, email, password} = req.body;
+        if ( !firstName || !lastName || !email || !password) {
           return res.status(400).json({message: "Please provide firstname, lastname, email and role"});
         }
 
@@ -54,7 +55,6 @@ exports.signup = async (req, res) => {
         lastName,
         email,
         password: hashedPassword,
-        role,
     });
     await newAdmin.save();
     await emailSender(email, lastName);
@@ -84,7 +84,8 @@ exports.login = async (req, res) => {
         if (!correctPassword) {
             res.status(400).json({message: "Incorrect Password"});
         }
-        const token = jwt.sign({ adminId: admin._id}, process.env.SECRET_KEY, {
+        console.log(admin);
+        const token = jwt.sign({ adminId: admin[0]._id}, process.env.SECRET_KEY, {
             expiresIn: "2h"  // Token expiration time
           });
           return res.status(200).json({message: "User Logged in Successfully", token: token, admin});
@@ -98,13 +99,13 @@ exports.allUsers = async (req, res) => {
   try {
       const id = req.user.adminId;
       const isAdmin = await Admin.findById(id);
-      if (isAdmin.role !== "admin") {
+      if (isAdmin.role !== "Admin") {
           return res
           .status(400)
           .json({ message: "You Are Not Authorized"});
       }
 
-    const allUsers = await User.find({}, { email: 1, userName: 1, _id: 0 });
+    const allUsers = await user.find({}, { email: 1, userName: 1, _id: 0 });
 
     return res
       .status(200)
