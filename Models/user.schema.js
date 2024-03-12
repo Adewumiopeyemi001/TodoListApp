@@ -23,6 +23,9 @@ const userSchema = new mongoose.Schema({
         required: true,
         default: false,
     },
+    otpExpiration: {
+        type: Date,
+    },
     list: [
         {
             description: {

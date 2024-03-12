@@ -2,7 +2,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const Admin = require('../Models/admin.schema');
-const user = require("../models/user.schema");
 
 const emailSender = async (email, lastName) => {
     const transporter = nodemailer.createTransport({
