@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const User = require('../Models/user.schema');
 const emailSender = require('../middleware/email');
+const login = require("./user.login");
+const isVerifyOtp = require("./user.otp-verification");
 
 const OTP_EXPIRATION_TIME_MINUTES = 1;
 
@@ -69,42 +71,7 @@ await emailSender(email, userName, otp);
   }
 };
 
-exports.isVerifyOtp = async (req, res) => {
-  try {
-    const otp = req.query.otp;
-  if (!otp) {
-    return res.status(400).json({message: "Please input Your Otp"})
-  }
-  const user = await User.findOne({otp: otp});
-  if (!user) {
-    return res.status(400).json({message: "User With That Otp Not Found"});
-  }
-
-// Check if the OTP has expired
-const currentTime = new Date();
-if (user.otpExpiration && currentTime > user.otpExpiration) {
-  // Clear the expired OTP
-  User.otp = null;
-  user.otpExpiration = null;
-  await user.save();
-  return res.status(400).json({ message: "OTP has expired, please request a new one" });
-}
-
-  if (user.otp !== otp) {
-    return res.status(400).json({message: "Invalid OTP"});
-  }
-  user.isVerified = true;
-  user.otpExpiration = null;
-  User.otp = null;
-
-  await user.save();
-
-  return res.status(200).json({message: "OTP Verified successfully"});
-  }catch (err) {
-    console.log(err);
-    return res.status(500).json({ message: "Error Verfying OTP"});
-  }
-};
+const loginUser = login;
 
 exports.resendOtp = async (req, res) => {
   try {
@@ -143,74 +110,6 @@ exports.resendOtp = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Error sending OTP" });
-  }
-};
-
-// exports.resendOtp = async (req, res) => {
-//   try{
-//     const {email} = req.body;
-//     const user = await User.findOne({email});
-//     if (!user) {
-//       return res.status(400).json({message: "User Not Found"});
-//     }
-
-// // Check if previous OTP has expired
-//     const now = new Date();
-//     if (user.otpExpiration && user.otpExpiration > now) {
-//       return res.status(400).json({ message: "Previous OTP has not expired yet" });
-//     }
-
-//     const generateOTP = () => {
-//       const digits = '0123456789';
-//       let OTP = '';
-//       for (let i = 0; i < 6; i++) {
-//         OTP += digits[Math.floor(Math.random() * 10)];
-//       }
-//       return OTP;
-//     };
-
-//     const otp = generateOTP();
-//     user.otp = otp;
-//     await user.save();
-//     await emailSender(email, user.userName, otp);
-//     return res.status(200).json({message: "New OTP verified successfully", user});
-//   }catch (err) {
-//     return res.status(500).json({ message: "Error Sending  OTP"});
-//   }
-// };
-
-exports.login = async (req, res) => {
-  try {
-    const {userName, password} = req.body;
-    if(!userName || !password) {
-      res.status(400).json({message: "Please input your username and password"});
-    }
-// Find The User By Email In the Database
-    const user = await User.findOne({ userName });
-  
-    // If you are not a user, sign up
-    if(!user) {
-      res.status(404).json({message: "User Not Found, Please SignUp"});
-    }
-
-    if (!user.isVerified) {
-      return res.status(404).json({ message: "User Not Verified, Please check your email"});
-    }
-
-    const correctPassword = await bcrypt.compare(password, user.password);
-    if (!correctPassword) {
-      return res.status(400).json({message: "Incorrect Password"});
-    }
-
-    // Generate a token
-    const token = jwt.sign({ userId: user._id}, process.env.SECRET_KEY, {
-      expiresIn: "2h"  // Token expiration time
-    });
-    return res.status(200).json({message: "User Logged in Successfully", token: token, user});
-
-  }catch (error) {
-    console.log(error);
-    return res.status(500).json({message: "Error Logging In User", error})
   }
 };
 

@@ -1,5 +1,7 @@
 const express = require('express');
-const { signup, login, addList, updateListDescription, updateEmail, completedTodo, getAllList, getAllListAndPaginate, completedToDoList, filteredByDescription, filteredByDate, isVerifyOtp, resendOtp } = require("../Controller/user.controller");
+const { signup, addList, updateListDescription, updateEmail, completedTodo, getAllList, getAllListAndPaginate, completedToDoList, filteredByDescription, filteredByDate, resendOtp } = require("../Controller/user.controller");
+const login = require('../Controller/user.login');
+const isVerifyOtp = require('../Controller/user.otp-verification');
 const router = express.Router();
 
 
