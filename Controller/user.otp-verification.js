@@ -15,10 +15,6 @@ const isVerifyOtp = async (req, res) => {
   // Check if the OTP has expired
   const currentTime = new Date();
   if (user.otpExpiration && currentTime > user.otpExpiration) {
-    // Clear the expired OTP
-    User.otp = null;
-    user.otpExpiration = null;
-    await user.save();
     return res.status(400).json({ message: "OTP has expired, please request a new one" });
   }
   
@@ -27,7 +23,7 @@ const isVerifyOtp = async (req, res) => {
     }
     user.isVerified = true;
     user.otpExpiration = null;
-    User.otp = null;
+    user.otp = null;
   
     await user.save();
   

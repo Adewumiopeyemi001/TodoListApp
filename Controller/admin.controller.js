@@ -56,7 +56,6 @@ exports.signup = async (req, res) => {
         password: hashedPassword,
     });
     await newAdmin.save();
-    await emailSender(email, lastName);
 
     return res
       .status(201)

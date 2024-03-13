@@ -1,10 +1,10 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const ejs = require("ejs");
+const path = require("path");
 const User = require('../Models/user.schema');
-const emailSender = require('../middleware/email');
-const login = require("./user.login");
-const isVerifyOtp = require("./user.otp-verification");
+const { emailSenderTemplate } = require("../middleware/email");
 
 const OTP_EXPIRATION_TIME_MINUTES = 1;
 
@@ -12,7 +12,7 @@ exports.signup = async (req, res) => {
   try {
     const { userName, password, email } = req.body;
 
-    if (!userName || !password || !email) {
+    if (!userName || !password || !email) { 
       return res
         .status(400)
         .json({ message: "Please provide username, password, and email" });
@@ -60,7 +60,20 @@ exports.signup = async (req, res) => {
 
     await newUser.save();
 
-await emailSender(email, userName, otp);
+ // Send email with OTP
+
+ await ejs.renderFile(
+  path.join(__dirname, "../public/signup.ejs"),
+  {
+    title: `Hello ${userName},`,
+    body: "Welcome",
+    userName: userName,
+    otp: otp,
+  },
+  async (err, data) => {
+    await emailSenderTemplate(data, "Welcome to Todo List App!", email);
+  }
+);
 
     return res
       .status(201)
@@ -71,7 +84,6 @@ await emailSender(email, userName, otp);
   }
 };
 
-const loginUser = login;
 
 exports.resendOtp = async (req, res) => {
   try {
@@ -103,8 +115,21 @@ exports.resendOtp = async (req, res) => {
 
     user.otp = otp;
     user.otpExpiration = otpExpiration;
+    user.isVerified = false;
     await user.save();
-    await emailSender(email, user.userName, otp);
+  
+    await ejs.renderFile(
+      path.join(__dirname, "../public/resendotp.ejs"),
+      {
+        title: `Hello ${user.userName},`,
+        body: "Welcome",
+        userName: user.userName,
+        otp: otp,
+      },
+      async (err, data) => {
+        await emailSenderTemplate(data, "Resent OTP for Todo List App", email);
+      }
+    );
 
     return res.status(200).json({ message: "New OTP sent successfully", user });
   } catch (err) {
