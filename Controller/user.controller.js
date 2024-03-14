@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const cloudinary = require("../public/image/cloudinary");
 const ejs = require("ejs");
 const path = require("path");
 const User = require('../Models/user.schema');
@@ -309,5 +310,37 @@ exports.filteredByDate = async (req, res) => {
     return res.status(200).json({message: "Filtered Todo List by Date Successfully", data: filteredList.length, filteredList,});
   }catch (err) {
     return res.status(500).json({message: "Error fetching filtered Todo List by Date", err});
+  }
+};
+
+exports.uploadPicture = async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.id });
+    if (!user) {
+      return errorResMsg(res, 400, "User not found");
+    }
+    const result = await cloudinary.v2.uploader.upload(req.file.path);
+    const updatedUser = await User.findByIdAndUpdate(
+      {
+        _id: req.params.id,
+      },
+      { profilePic: result.secure_url },
+      {
+        isNew: true,
+      }
+    );
+
+    return res
+      .status(200)
+      .json({
+        message: "Profile Pictur Saved Successfully",
+        data: updatedUser,
+      });
+  } catch (err) {
+    // console.log(error);
+    console.error(err);
+    return res
+      .status(500)
+      .json({ message: "Error Uploading Profile Picture", err });
   }
 };

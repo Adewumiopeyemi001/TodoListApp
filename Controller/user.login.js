@@ -1,6 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const ejs = require('ejs');
+const path = require("path");
 const User = require('../Models/user.schema');
+const { emailSenderTemplate } = require("../middleware/email");
 
 
 const login = async (req, res) => {
@@ -30,11 +33,24 @@ const login = async (req, res) => {
       const token = jwt.sign({ userId: user._id}, process.env.SECRET_KEY, {
         expiresIn: "2h"  // Token expiration time
       });
+
+      await ejs.renderFile(
+        path.join(__dirname, "../public/login.ejs"),
+        {
+          title: `Hello ${userName},`,
+          body: "You Just login In",
+          userName: userName,
+        },
+        async (err, data) => {
+          await emailSenderTemplate(data, "Login Detected", user.email);
+        }
+      );
+
       return res.status(200).json({message: "User Logged in Successfully", token: token, user});
   
-    }catch (error) {
-      console.log(error);
-      return res.status(500).json({message: "Error Logging In User", error})
+    }catch (err) {
+      console.log(err);
+      return res.status(500).json({message: "Error Logging In User", err})
     }
   };
 
