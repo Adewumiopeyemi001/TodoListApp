@@ -1,5 +1,5 @@
 const express = require('express');
-const { signup, addList, updateListDescription, updateEmail, completedTodo, getAllList, getAllListAndPaginate, completedToDoList, filteredByDescription, filteredByDate, resendOtp, uploadPicture } = require("../Controller/user.controller");
+const { signup, addList, updateListDescription, updateEmail, completedTodo, getAllList, getAllListAndPaginate, completedToDoList, filteredByDescription, filteredByDate, resendOtp, uploadPicture, forgetPassword, resetPassword } = require("../Controller/user.controller");
 const login = require('../Controller/user.login');
 const isVerifyOtp = require('../Controller/user.otp-verification');
 const upload = require('../public/image/multer');
@@ -10,6 +10,8 @@ router.get("/getalllist/:id", getAllList);
 router.post("/signup", signup);
 router.post("/verify", isVerifyOtp);
 router.post("/newotp", resendOtp);
+router.post("/forgotpassword", forgetPassword);
+router.post("/resetpassword/:token", resetPassword);
 router.post("/login", login);
 router.post("/addlist/:id", addList)
 router.put("/updatedescription/:id/:listId", updateListDescription);
