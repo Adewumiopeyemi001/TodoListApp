@@ -41,30 +41,29 @@ passport.use(
       clientSecret: process.env.CLIENT_SECRET,
       passReqToCallback: true,
     },
+    /**
+     * Callback function for Google OAuth2.0 strategy.
+     *
+     * @param {string} req The request object.
+     * @param {string} accessToken Access token provided by Google.
+     * @param {string} refreshToken Refresh token provided by Google.
+     * @param {Object} profile User profile data from Google.
+     * @param {Function} done Callback function.
+     */
     async (req, accessToken, refreshToken, profile, done) => {
       try {
-        // Check if email is provided by Google
-        if (!profile.emails || !profile.emails.length) {
-          return done(new Error("Email not provided by Google."), null);
-        }
-
-        const email = profile.emails[0].value; // Get the first email in the list
-
-        // Check if user with the same email already exists
         const existingUser = await User.findOne({ googleId: profile.id });
 
         if (existingUser) {
           return done(null, existingUser);
         }
 
-        // Create new user if email is provided and unique
         const newUser = await new User({
           userName: profile.displayName,
-          email,
           googleId: profile.id,
           isVerified: true,
         }).save();
-
+console.log(newUser);
         done(null, newUser);
       } catch (err) {
         done(err, null);
